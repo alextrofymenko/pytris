@@ -289,10 +289,20 @@ class Board():
         self.width = width
         self.height = height
 
+        # Init scoreboard
+        self.score = Score()
+        self.scoreboard = CanvasFrame(win, self.width * Block.BLOCK_SIZE, 
+                                        5 * Block.BLOCK_SIZE)
+        self.scoreboard.setBackground('dark gray')
+        self.scoreboard.pack(side="left", fill="both", expand=True)
+        self.draw_score(self.score)
+
         # create a canvas to draw the tetris shapes on
         self.canvas = CanvasFrame(win, self.width * Block.BLOCK_SIZE,
                                         self.height * Block.BLOCK_SIZE)
         self.canvas.setBackground('light gray')
+        self.canvas.pack(side="left")
+
 
         # create an empty dictionary
         # currently we have no shapes on the board
@@ -434,12 +444,17 @@ class Board():
         
         #YOUR CODE HERE
         row = self.height - 1
+        num_rows_deleted = 0
         while (row >= 0):
             if (self.is_row_complete(row)):
                 self.delete_row(row)
                 self.move_down_rows(row)
+                num_rows_deleted += 1
             else:
                 row -= 1
+
+        self.score.delete_row(num_rows_deleted**2)
+        self.draw_score(self.score)
 
     def game_over(self):
         ''' display "Game Over !!!" message in the center of the board
@@ -447,11 +462,31 @@ class Board():
         '''
         
         #YOUR CODE HERE
-        p2 = Point(int(self.width/2) * Block.BLOCK_SIZE, int(self.height/2) * Block.BLOCK_SIZE)
-        t = Text(p2, "Game Over!")
+        point = Point(int(self.width/2) * Block.BLOCK_SIZE, int(self.height/2) * Block.BLOCK_SIZE)
+        t = Text(point, "Game Over!")
         t.setSize(30)
         t.draw(self.canvas)
 
+    def draw_score(self, score):
+        point = Point(self.width/2 * Block.BLOCK_SIZE, 2 * Block.BLOCK_SIZE)
+        t = Text(point, "Score:\n" + str(self.score.get_score()))
+        t.setSize(30)
+        t.draw(self.scoreboard)
+        if (score.graphics):
+            score.graphics.undraw()
+        score.graphics = t
+
+class Score(object):
+    def __init__(self):
+        self.level = 1
+        self.score = 0
+        self.graphics = None
+
+    def delete_row(self, num_rows):
+        self.score += self.level * num_rows * 100
+
+    def get_score(self):
+        return self.score
 
 ############################################################
 # TETRIS CLASS
@@ -472,11 +507,11 @@ class Tetris():
     
     SHAPES = [I_shape, J_shape, L_shape, O_shape, S_shape, T_shape, Z_shape]
     DIRECTION = {'Left':(-1, 0), 'Right':(1, 0), 'Down':(0, 1)}
-    BOARD_WIDTH = 10
+    BOARD_WIDTH = 15
     BOARD_HEIGHT = 20
-    
+        
     def __init__(self, win):
-        self.board = Board(win, self.BOARD_WIDTH, self.BOARD_HEIGHT)
+        self.board = Board(win, self.BOARD_WIDTH - 5, self.BOARD_HEIGHT)
         self.win = win
         self.delay = 1000 #ms
 
